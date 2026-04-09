@@ -9,9 +9,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.metrics import (mean_squared_error, r2_score,
-                             accuracy_score, precision_score,
-                             recall_score, classification_report)
+from sklearn.metrics import (mean_squared_error, r2_score, accuracy_score, precision_score, recall_score, classification_report)
 
 # Step 2: Loading Dataset
 df = pd.read_csv('student_data.csv')
