@@ -1,6 +1,6 @@
 # ============================================
 # Student Performance Predictor
-# Complete ML Project
+# Complete ML Project - Kaggle Dataset
 # ============================================
 
 # Step 1: Libraries import
@@ -21,7 +21,24 @@ from sklearn.metrics import (mean_squared_error, r2_score,
 # ============================================
 # Step 2: Dataset Load karna
 # ============================================
-df = pd.read_csv('student_data.csv')
+df = pd.read_csv('student_performance.csv')
+
+# Sirf useful columns rakhna + rename karna
+df = df[['weekly_self_study_hours', 'attendance_percentage',
+         'class_participation', 'total_score']].copy()
+
+df.rename(columns={
+    'weekly_self_study_hours': 'study_hours',
+    'attendance_percentage':   'attendance_percent',
+    'class_participation':     'internal_marks',
+    'total_score':             'exam_score'
+}, inplace=True)
+
+# Pass/Fail column banana
+df['pass_fail'] = (df['exam_score'] >= 40).astype(int)
+
+# 10 lakh rows h - sample lete h 10000 ka (fast chalega)
+df = df.sample(n=10000, random_state=42).reset_index(drop=True)
 
 print("=" * 50)
 print("DATASET OVERVIEW")
@@ -57,29 +74,26 @@ axes[0,0].set_title('Study Hours vs Exam Score')
 sns.scatterplot(data=df, x='attendance_percent', y='exam_score', ax=axes[0,1], color='green')
 axes[0,1].set_title('Attendance vs Exam Score')
 sns.scatterplot(data=df, x='internal_marks', y='exam_score', ax=axes[1,0], color='red')
-axes[1,0].set_title('Internal Marks vs Exam Score')
-sns.scatterplot(data=df, x='previous_marks', y='exam_score', ax=axes[1,1], color='purple')
-axes[1,1].set_title('Previous Marks vs Exam Score')
+axes[1,0].set_title('Class Participation vs Exam Score')
+plt.delaxes(axes[1,1])  # 4th plot empty h kyunki 3 hi features hain
 plt.tight_layout()
 plt.show()
 
 # Correlation Heatmap
 plt.figure(figsize=(8, 6))
-sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
+sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', fmt='.2f')
 plt.title('Correlation Heatmap')
 plt.tight_layout()
 plt.show()
 
 # Box Plots
-fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-sns.boxplot(data=df, y='study_hours', ax=axes[0,0], color='blue')
-axes[0,0].set_title('Study Hours')
-sns.boxplot(data=df, y='attendance_percent', ax=axes[0,1], color='green')
-axes[0,1].set_title('Attendance %')
-sns.boxplot(data=df, y='internal_marks', ax=axes[1,0], color='red')
-axes[1,0].set_title('Internal Marks')
-sns.boxplot(data=df, y='previous_marks', ax=axes[1,1], color='purple')
-axes[1,1].set_title('Previous Marks')
+fig, axes = plt.subplots(1, 3, figsize=(14, 5))
+sns.boxplot(data=df, y='study_hours', ax=axes[0], color='blue')
+axes[0].set_title('Study Hours')
+sns.boxplot(data=df, y='attendance_percent', ax=axes[1], color='green')
+axes[1].set_title('Attendance %')
+sns.boxplot(data=df, y='internal_marks', ax=axes[2], color='red')
+axes[2].set_title('Class Participation')
 plt.tight_layout()
 plt.show()
 
@@ -90,7 +104,7 @@ print("\n" + "=" * 50)
 print("DATA PREPROCESSING")
 print("=" * 50)
 
-X = df[['study_hours', 'attendance_percent', 'internal_marks', 'previous_marks']]
+X = df[['study_hours', 'attendance_percent', 'internal_marks']]
 y = df['exam_score']
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -115,20 +129,14 @@ lr_base = LinearRegression()
 
 # Forward Selection
 forward_selector = SequentialFeatureSelector(
-    lr_base,
-    n_features_to_select=2,
-    direction='forward'
-)
+    lr_base, n_features_to_select=2, direction='forward')
 forward_selector.fit(scaler.fit_transform(X), y)
 print("\nForward Selection - Selected Features:")
 print(X.columns[forward_selector.get_support()].tolist())
 
 # Backward Selection
 backward_selector = SequentialFeatureSelector(
-    lr_base,
-    n_features_to_select=2,
-    direction='backward'
-)
+    lr_base, n_features_to_select=2, direction='backward')
 backward_selector.fit(scaler.fit_transform(X), y)
 print("\nBackward Selection - Selected Features:")
 print(X.columns[backward_selector.get_support()].tolist())
@@ -144,8 +152,7 @@ print(f"Total Variance Covered: {sum(pca.explained_variance_ratio_):.2f}")
 plt.figure(figsize=(10, 6))
 scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1],
                       c=df['exam_score'],
-                      cmap='coolwarm',
-                      alpha=0.6)
+                      cmap='coolwarm', alpha=0.6)
 plt.colorbar(scatter, label='Exam Score')
 plt.xlabel('First Principal Component')
 plt.ylabel('Second Principal Component')
@@ -195,7 +202,7 @@ print("\n" + "=" * 50)
 print("CLASSIFICATION - PASS/FAIL PREDICTION")
 print("=" * 50)
 
-X_clf = df[['study_hours', 'attendance_percent', 'internal_marks', 'previous_marks']]
+X_clf = df[['study_hours', 'attendance_percent', 'internal_marks']]
 y_clf = df['pass_fail']
 
 X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(
@@ -215,9 +222,6 @@ print(f"Recall:    {recall_score(y_test_c, clf_pred):.2f}")
 print("\nDetailed Report:")
 print(classification_report(y_test_c, clf_pred))
 
-print("\n" + "=" * 50)
-print("✅ PROJECT COMPLETE!")
-print("=" * 50)
 print("\n" + "=" * 50)
 print("✅ PROJECT COMPLETE!")
 print("=" * 50)
